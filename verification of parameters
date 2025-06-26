@@ -1,0 +1,43 @@
+from ibm_watsonx_ai.foundation_models import Model
+import json
+
+def analyze_review_with_watsonx(review):
+    model_id = 'google/flan-ul2' # Choose an appropriate model ID
+    parameters = {
+        "max_new_tokens": 100,
+        "temperature": 0.3,
+        # Add other parameters as needed
+    }
+
+    # Note: Model initialization ideally happens once outside the function
+    # for efficiency, but for demonstration, we'll initialize here.
+    # We'll use the existing apikey, project_id, and watsonx_url variables.
+    model = Model(
+        model_id=model_id,
+        params=parameters,
+        credentials={
+            "url": watsonx_url,
+            "apikey": apikey # Ensure apikey is available in the environment
+        },
+        project_id=project_id # Ensure project_id is available in the environment
+    )
+
+    prompt = f"""Analyze this car rental review and:
+1. Identify the sentiment (Positive, Neutral, Negative)
+2. Extract key issues (e.g., late delivery, poor condition, helpful staff)
+
+Review: "{review}"
+Respond in JSON format with keys: sentiment, issues.
+"""
+
+    try:
+        # The generate method's return type can vary.
+        # We assume it returns a string that can be parsed as JSON.
+        # If it returns a different structure, this parsing will need adjustment.
+        response = model.generate(prompt)
+        result = json.loads(response)
+        return result.get('sentiment', 'Unknown'), ", ".join(result.get('issues', ['Unknown']))
+    except Exception as e:
+        # In case of an error (e.g., API call failure, JSON parsing error)
+        # Return 'Error' and the error message
+        return "Error", str(e)
